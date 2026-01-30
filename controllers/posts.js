@@ -27,6 +27,16 @@ const getPostById = async (req, res) =>{
     })
 }
 
+const getCommentByPostId = async (req, res) =>{
+    const {postId} = req.params;
+    const comments = await PostService.getCommentByPostId(postId, req.user.userId);
+    if(!comments){
+        throw new APIError("Post not found", 404);
+    }
+    res.status(200).json({
+        Comment : comments
+    })
+}
 const updatePost = async (req, res) => {
     const {id} = req.params;
 
@@ -83,4 +93,4 @@ const deletePost = async (req, res) =>{
     })
 }
 
-module.exports = {createPost, getAllPosts, getPostById, updatePost, deletePost};
+module.exports = {createPost, getAllPosts, getPostById, getCommentByPostId, updatePost, deletePost};

@@ -1,5 +1,7 @@
 const Post = require('../models/posts');
+const Comment = require('../models/comments');
 const User = require('../models/users');
+const comment = require('../models/comments');
 
 const createPost = async (postData, authorId) => {
     const post = await Post.create({...postData, userId: authorId});
@@ -54,6 +56,25 @@ const getPostById = async (id) =>{
     return post;
 } 
 
+const getCommentByPostId = async (postId, userId) => {
+  const post = Post.findById(postId);
+  if (!post) {
+    return null;
+  }
+
+  let comment = await Comment.find({ postId: postId });
+  for (let i = 0; i < comment.length; i++) {
+    comment[i] = comment[i].toObject ? comment[i].toObject() : comment[i];
+    const authorId = comment[i].userId;
+    if (authorId.toString() === userId.toString()) {
+      comment[i]["isOwner"] = true;
+    } else {
+      comment[i]["isOwner"] = true;
+    }
+  }
+  return comment;
+};
+
 const updatePost = async (id, postData) =>{
     const updatedPost = await Post.findOneAndUpdate({ _id: id }, postData, { new: true });
     
@@ -65,6 +86,7 @@ const updatePost = async (id, postData) =>{
 }
 
 const deletePost = async (id) =>{
+    await comment.deleteMany({postId: id});
     const deletedPost = await Post.findOneAndDelete({_id: id});
 
     if(!deletedPost){
@@ -73,4 +95,4 @@ const deletePost = async (id) =>{
     return deletedPost;
 }
 
-module.exports = { createPost, getAllPosts, getPostById, updatePost, deletePost};
+module.exports = { createPost, getAllPosts, getPostById, getCommentByPostId, updatePost, deletePost};
