@@ -15,6 +15,8 @@ router.get('/',authenticate, restrictTo(['admin']), validate(schemas.user.getAll
 
 router.get('/:id', usersController.getUserById);
 
+router.get('/:userId/likes', usersController.getUserLikes);
+
 router.patch('/:id', validate(schemas.user.updateUserSchema), usersController.updateUser)
 
 router.delete('/:id', usersController.deleteUser);

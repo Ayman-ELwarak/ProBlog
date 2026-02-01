@@ -1,5 +1,6 @@
 module.exports = {
     post: require('./post'),
     user: require('./user'),
-    comment: require('./comment')
+    comment: require('./comment'),
+    like: require('./like')
 }

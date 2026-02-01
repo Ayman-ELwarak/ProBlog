@@ -1,6 +1,6 @@
 const Comment = require("../models/comments");
 const Post = require("../models/posts");
-const User = require("../models/users");
+const Like = require("../models/likes");
 
 const createComment = async (commentData, userId) => {
   const postId = await Post.findById(commentData.postId);
@@ -118,9 +118,10 @@ const deleteComment = async (id, userId) => {
         await deleteRecursive(reply._id);
       }
     }
+    await Like.deleteMany({ targetId: commentId, targetType: "Comment" });
     return await Comment.findByIdAndDelete(commentId);
   };
-
+  
   const deletedResult = await deleteRecursive(id);
 
   return deletedResult;

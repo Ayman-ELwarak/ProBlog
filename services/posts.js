@@ -1,7 +1,8 @@
 const Post = require('../models/posts');
 const Comment = require('../models/comments');
+const Like = require('../models/likes');
 const User = require('../models/users');
-const comment = require('../models/comments');
+
 
 const createPost = async (postData, authorId) => {
     const post = await Post.create({...postData, userId: authorId});
@@ -85,13 +86,36 @@ const updatePost = async (id, postData) =>{
     return updatedPost;
 }
 
-const deletePost = async (id) =>{
-    await comment.deleteMany({postId: id});
-    const deletedPost = await Post.findOneAndDelete({_id: id});
-
-    if(!deletedPost){
+const deletePost = async (id) => {
+    // check post found or not
+    const post = await Post.findById(id);
+    if(!post){
         return null;
     }
+
+    const postComments = await Comment.find({ postId: id }).select('_id');
+    const commentIds = postComments.map(comment => comment._id);
+
+    if (commentIds.length > 0) {
+        await Like.deleteMany({ 
+            targetId: { $in: commentIds }, 
+            targetType: 'Comment' 
+        });
+    }
+
+    await Comment.deleteMany({ postId: id });
+
+    await Like.deleteMany({ 
+        targetId: id, 
+        targetType: 'Post' 
+    });
+
+    const deletedPost = await Post.findOneAndDelete({ _id: id });
+
+    if (!deletedPost) {
+        return null;
+    }
+
     return deletedPost;
 }
 

@@ -30,6 +30,17 @@ const getUserById = async (req, res) =>{
     res.json({ message: "User fetched successfully", data: user });
 }
 
+const getUserLikes = async (req, res) => {
+    const {userId} = req.params;
+    const {likes, pagenation} = await UserService.getUserLikes(userId, req.query);
+
+    if(!likes){
+        throw new APIError('User Not Found');
+    }
+
+    res.status(200).json({data: likes, pagenation: pagenation});
+}
+
 const updateUser = async (req, res) => {
     const {id} = req.params;
     
@@ -52,4 +63,4 @@ const deleteUser = async (req, res) =>{
      res.json({ message: "User deleted successfully" });
 }
 
-module.exports = {signUp, signIn, getAllUsers, getUserById, updateUser, deleteUser};
+module.exports = {signUp, signIn, getAllUsers, getUserById, getUserLikes, updateUser, deleteUser};

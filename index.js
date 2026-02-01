@@ -9,6 +9,7 @@ const hpp = require('hpp');
 const userRouter = require('./routers/users');
 const postRouter = require('./routers/posts');
 const commentRouter = require('./routers/comments');
+const likeRouter = require('./routers/likes');
 const errorHandler = require('./middlewares/errorHandler');
 
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/users', userRouter);
 app.use('/posts', postRouter);
 app.use('/comments', commentRouter);
+app.use('/likes', likeRouter);
 
 app.use(errorHandler);
 app.use(cors());

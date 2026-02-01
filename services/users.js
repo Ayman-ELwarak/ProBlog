@@ -1,4 +1,5 @@
 const User = require("../models/users");
+const Like = require("../models/likes");
 const APIError = require("../utils/APIError");
 
 const util = require('util');
@@ -64,7 +65,30 @@ const getUserById = async (id) =>{
         return null;
     }
     return user;
-} 
+}
+
+const getUserLikes = async (userId, query) => {
+    // check if user found or not
+    const user = await User.findById(userId);
+    if(!user){
+        return null;
+    }
+
+    let { page = 1, limit = 10 } = query;
+    page = Number(page);
+    limit = Number(limit);
+    const likesPromise = await Like.find({userId: userId}, { password: 0 }).skip((page - 1) * limit).limit(limit);
+    const totalPromise = await User.countDocuments();
+    const [likes, total] = await Promise.all([likesPromise, totalPromise]);
+    const pagenation = {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+    }
+
+    return {likes, pagenation};
+}
 
 const updateUser = async (id, userData) =>{
     const updatedUser = await User.findOneAndUpdate({ _id: id }, userData, { new: true });
@@ -85,4 +109,4 @@ const deleteUser = async (id) =>{
     return deletedUser;
 }
 
-module.exports = { signUp, signIn, getAllUsers, getUserById, updateUser, deleteUser};
+module.exports = { signUp, signIn, getAllUsers, getUserById, getUserLikes, updateUser, deleteUser};
