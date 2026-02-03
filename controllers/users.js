@@ -1,7 +1,8 @@
 const UserService = require("../services/users");
 const EmailService = require("../services/email");
 const APIError = require("../utils/APIError");
-
+const ImageKitService = require("../services/imageKit");
+const User = require("../models/users");
 
 const signUp = async (req, res) => {
   const user = await UserService.signUp(req.body);
@@ -14,6 +15,60 @@ const signUp = async (req, res) => {
 const signIn = async (req, res) => {
   const data = await UserService.signIn(req.body);
   res.status(200).json({ message: "Signed in successfully", data: data });
+};
+
+const updateProfilePicture = async (req, res) => {
+  if (!req.file) {
+    throw new APIError("Please upload an image!", 400);
+  }
+
+  const uploadResult = await ImageKitService.uploadImage(
+    req.file,
+    "profiles",
+    `user_${req.user.userId}_${Date.now()}`,
+  );
+
+  if (req.user.profilePicture && req.user.profilePicture.fileId) {
+    ImageKitService.deleteImage(req.user.profilePicture.fileId);
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user.userId,
+    {
+      profilePicture: {
+        url: uploadResult.url,
+        fileId: uploadResult.fileId,
+      },
+    },
+    { new: true, runValidators: true },
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "Profile picture updated successfully",
+    data: {
+      user: updatedUser,
+    },
+  });
+};
+
+const deleteProfilePicture = async (req, res) => {
+  const user = await User.findById(req.user.userId);
+
+  if (!user.profilePicture.fileId) {
+    console.log(user.profilePicture.fileId);
+    throw new APIError("There is no profile picture to delete.", 404);
+  }
+
+  await ImageKitService.deleteImage(user.profilePicture.fileId);
+
+  user.profilePicture = { url: "", fileId: null };
+  await user.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "The profile image deleted successfully",
+  });
 };
 
 const getAllUsers = async (req, res) => {
@@ -74,6 +129,8 @@ const deleteUser = async (req, res) => {
 module.exports = {
   signUp,
   signIn,
+  updateProfilePicture,
+  deleteProfilePicture,
   getAllUsers,
   getUserById,
   getUserLikes,

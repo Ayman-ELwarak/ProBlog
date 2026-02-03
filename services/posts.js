@@ -2,6 +2,7 @@ const Post = require('../models/posts');
 const Comment = require('../models/comments');
 const Like = require('../models/likes');
 const User = require('../models/users');
+const ImageKitService = require("../services/imageKit");
 
 
 const createPost = async (postData, authorId) => {
@@ -91,6 +92,13 @@ const deletePost = async (id) => {
     const post = await Post.findById(id);
     if(!post){
         return null;
+    }
+
+    if (post.images && post.images.length > 0) {
+        const deletePromises = post.images.map(img => 
+            ImageKitService.deleteImage(img.fileId)
+        );
+        await Promise.all(deletePromises);
     }
 
     const postComments = await Comment.find({ postId: id }).select('_id');
