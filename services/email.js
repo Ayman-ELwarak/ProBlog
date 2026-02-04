@@ -48,7 +48,6 @@ class EmailService {
   static async sendPasswordResetConfirmation(user) {
     const html = this.#getTemplate("passwordResetConfirmation", {
       name: user.name,
-      date: new Date().toLocaleString(),
     });
 
     await sendEmail({

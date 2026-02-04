@@ -14,7 +14,13 @@ router.post('/signIn', validate(schemas.user.signInSchema), usersController.sign
 
 router.post('/profile-picture', authenticate, upload.profile, usersController.updateProfilePicture);
 
-router.delete('/profile-picture', authenticate, usersController.deleteProfilePicture)
+router.delete('/profile-picture', authenticate, usersController.deleteProfilePicture);
+
+router.post('/forgot-password', usersController.forgotPassword);
+
+router.post('/reset-password', usersController.resetPassword);
+
+router.patch("/change-password", authenticate, usersController.changePassword);
 
 router.get('/',authenticate, restrictTo(['admin']), validate(schemas.user.getAllUsersSchema), usersController.getAllUsers);
 

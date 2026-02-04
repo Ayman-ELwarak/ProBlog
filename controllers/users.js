@@ -2,7 +2,10 @@ const UserService = require("../services/users");
 const EmailService = require("../services/email");
 const APIError = require("../utils/APIError");
 const ImageKitService = require("../services/imageKit");
+const PassowrdResetService = require("../services/passwordReset");
 const User = require("../models/users");
+const bcrypt = require("bcrypt");
+
 
 const signUp = async (req, res) => {
   const user = await UserService.signUp(req.body);
@@ -71,6 +74,71 @@ const deleteProfilePicture = async (req, res) => {
   });
 };
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new APIError("There is no user with that email address.", 404);
+  }
+
+  const resetToken = await PassowrdResetService.generateResetToken();
+  await PassowrdResetService.saveResetToken(user._id, resetToken);
+
+  await EmailService.sendPasswordResetEmail(user, resetToken);
+  res.status(200).json({
+    status: "success",
+    message: "Token sent to email",
+  });
+};
+
+const resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+
+  if (!password) {
+    throw new APIError("Please provide a new password", 400);
+  }
+
+  const user = await PassowrdResetService.resetPassword(token, password);
+
+  if (!user) {
+    throw new APIError("Token is invalid or has expired", 400);
+  }
+
+  await EmailService.sendPasswordResetConfirmation(user);
+
+  res.status(200).json({
+    status: "success",
+    message: "Password reset Successful, Confirmaion email sent.",
+  });
+};
+
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    throw new APIError("Please provide current and new password", 400);
+  }
+
+  const user = await UserService.getUserById(req.user.userId);
+
+  const correctPassword = await bcrypt.compare(currentPassword, user.password);
+
+  if (!correctPassword) {
+    throw new APIError("Current password is incorrect", 401);
+  }
+
+  const hashPassword = await bcrypt.hash(newPassword, 12);
+  user.password = hashPassword;
+
+  user.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Password changed successfully",
+  });
+};
+
 const getAllUsers = async (req, res) => {
   const { users, pagenation } = await UserService.getAllUsers(req.query);
   res.json({
@@ -131,6 +199,9 @@ module.exports = {
   signIn,
   updateProfilePicture,
   deleteProfilePicture,
+  forgotPassword,
+  resetPassword,
+  changePassword,
   getAllUsers,
   getUserById,
   getUserLikes,
